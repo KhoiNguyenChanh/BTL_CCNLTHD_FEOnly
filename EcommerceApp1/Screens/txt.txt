@@ -1,0 +1,346 @@
+import React, { useState } from 'react';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import { Formik } from 'formik';
+import * as yup from 'yup';
+import axios from 'axios';
+import { AntDesign, Entypo, MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import RegisterStyle from '../styles/RegisterStyle';
+
+export default function RegisterScreen({ navigation }) {
+    const [avatar, setAvatar] = useState(null);
+
+    const picker = async () => {
+        let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            alert('Permission Denied!');
+        } else {
+            let res = await ImagePicker.launchImageLibraryAsync();
+            if (!res.cancelled) {
+                setAvatar(() => res.uri);
+            }
+        }
+    };
+
+    return (
+        <View style={RegisterStyle.container}>
+            <ScrollView>
+                <View style={RegisterStyle.titleContainer}>
+                    <Text style={RegisterStyle.bigText}>Đăng ký</Text>
+                    <Text style={RegisterStyle.smallText}>Trở thành người dùng mới!</Text>
+                </View>
+
+                <Formik
+                    initialValues={{ name: '', email: '', password: '', roles: '' }}
+                    validationSchema={yup.object().shape({
+                        name: yup.string().required('Không được để trống'),
+                        email: yup.string().email('Email không hợp lệ').required('Vui lòng nhập email'),
+                        password: yup.string().min(6, 'Mật khẩu cần ít nhất 6 kí tự').required('Vui lòng nhập mật khẩu'),
+                        roles: yup.string().required('Không được để trống'),
+                    })}
+                    onSubmit={(values, { resetForm }) => {
+                        handleRegister(values);
+                        resetForm();
+                    }}
+                >
+                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                        <View style={RegisterStyle.inputContainer}>
+                            <View>
+                                <Text style={RegisterStyle.abvInput}>Tên người dùng</Text>
+                                <View style={RegisterStyle.iconInputContainer}>
+                                    <MaterialIcons
+                                        style={RegisterStyle.icon}
+                                        name="person"
+                                        size={27}
+                                        color="#2B2523"
+                                    />
+                                    <TextInput
+                                        style={[RegisterStyle.Input, { fontSize: values.name ? 16 : 16 }]}
+                                        placeholder='Nguyễn Văn A'
+                                        placeholderTextColor={'gray'}
+                                        onChangeText={handleChange('name')}
+                                        onBlur={handleBlur('name')}
+                                        value={values.name}
+                                    />
+                                </View>
+                                {touched.name && errors.name &&
+                                    <Text style={RegisterStyle.errorText}>{errors.name}</Text>
+                                }
+                            </View>
+
+                            <View>
+                                <Text style={RegisterStyle.abvInput}>Email</Text>
+                                <View style={RegisterStyle.iconInputContainer}>
+                                    <MaterialIcons
+                                        style={RegisterStyle.icon}
+                                        name="email"
+                                        size={27}
+                                        color="#2B2523"
+                                    />
+                                    <TextInput
+                                        style={[RegisterStyle.Input, { fontSize: values.email ? 16 : 16 }]}
+                                        placeholder='user@gmail.com'
+                                        placeholderTextColor={'gray'}
+                                        onChangeText={handleChange('email')}
+                                        onBlur={handleBlur('email')}
+                                        value={values.email}
+                                    />
+                                </View>
+                                {touched.email && errors.email &&
+                                    <Text style={RegisterStyle.errorText}>{errors.email}</Text>
+                                }
+                            </View>
+
+                            <View>
+                                <Text style={RegisterStyle.abvInput}>Mật khẩu</Text>
+                                <View style={RegisterStyle.iconInputContainer}>
+                                    <AntDesign
+                                        style={RegisterStyle.icon}
+                                        name="lock"
+                                        size={27}
+                                        color="#2B2523"
+                                    />
+                                    <TextInput
+                                        style={[RegisterStyle.Input, { fontSize: values.password ? 16 : 16 }]}
+                                        placeholder='Nhập mật khẩu của bạn'
+                                        secureTextEntry={true}
+                                        placeholderTextColor={'gray'}
+                                        onChangeText={handleChange('password')}
+                                        onBlur={handleBlur('password')}
+                                        value={values.password}
+                                    />
+                                </View>
+                                {touched.password && errors.password &&
+                                    <Text style={RegisterStyle.errorText}>{errors.password}</Text>
+                                }
+                            </View>
+
+                            <View>
+                                <Text style={RegisterStyle.abvInput}>Avatar</Text>
+                                <View style={RegisterStyle.iconInputContainer}>
+                                    <AntDesign
+                                        style={RegisterStyle.icon}
+                                        name="picture"
+                                        size={27}
+                                        color="#2B2523"
+                                    />
+                                    <TouchableOpacity
+                                        style={[RegisterStyle.Input, { justifyContent: 'center' }]}
+                                        onPress={picker}
+                                    >
+                                        <Text style={[RegisterStyle.abvInput, { fontSize: 16 }]}>Nhấn để chọn ảnh đại diện</Text>
+                                        <View>
+                                            {avatar && <Image source={{ uri: avatar }} style={{ width: 100, height: 100 }} />}
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            <View style={RegisterStyle.marginInput}>
+                                <Text style={RegisterStyle.abvInput}>Vai trò</Text>
+                                <View style={RegisterStyle.iconInputContainer}>
+                                    <Entypo
+                                        style={RegisterStyle.icon}
+                                        name="briefcase"
+                                        size={27}
+                                        color="#2B2523"
+                                    />
+                                    <TextInput
+                                        style={[RegisterStyle.Input, { fontSize: values.roles ? 16 : 16 }]}
+                                        placeholder='User/ Seller/ Nhân viên sàn...?'
+                                        secureTextEntry={true}
+                                        placeholderTextColor={'gray'}
+                                        onChangeText={handleChange('roles')}
+                                        onBlur={handleBlur('roles')}
+                                        value={values.roles}
+                                    />
+                                </View>
+                                {touched.roles && errors.roles &&
+                                    <Text style={RegisterStyle.errorText}>{errors.roles}</Text>
+                                }
+                            </View>
+
+                            <TouchableOpacity style={RegisterStyle.btn} onPress={handleSubmit}>
+                                <Text style={RegisterStyle.btnText}>ĐĂNG KÝ</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </Formik>
+
+                <View style={RegisterStyle.orContainer}>
+                    <Text>Hoặc đăng ký bằng</Text>
+                </View>
+
+                <View style={RegisterStyle.btnLoginContainer}>
+                    <TouchableOpacity>
+                        <AntDesign name="facebook-square" size={45} color="darkblue" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity>
+                        <Image
+                            style={RegisterStyle.googleLogo}
+                            source={require('../assets/googleLogo.png')} />
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+
+            {/*Not a user yet?*/}
+                <View style={RegisterStyle.toLogin}>
+                    <Text style={RegisterStyle.textToLogin}>Đã có tài khoản?</Text>
+                     <TouchableOpacity
+                         onPress={() => navigation.navigate('Login')}>
+                        <Text style={RegisterStyle.touchToLogin}>Đăng nhập</Text>
+                    </TouchableOpacity>
+                </View>
+
+
+             </View>
+         
+     ); }
+
+=========================================================================================================================================================================================
+=========================================================================================================================================================================================
+=========================================================================================================================================================================================
+End of the line, just in case need it back
+
+
+     {/*Input space */}
+< View style={[RegisterStyle.inputContainer/*, { backgroundColor: 'coral' }*/]}>
+
+{/*input tên */}
+<View>
+    <Text style={RegisterStyle.abvInput} >Tên người dùng</Text>
+    <View style={RegisterStyle.iconInputContainer}>
+        <MaterialIcons
+            style={RegisterStyle.icon}
+            name="person"
+            size={27}
+            color="#2B2523" />
+        <TextInput
+            value={name}
+            onChangeText={(text) => setName(text)}
+            style={[RegisterStyle.Input, { fontSize: name ? 16 : 16 }]}
+            placeholder='Nguyễn Văn A'
+            placeholderTextColor={'gray'}
+        />
+    </View>
+
+</View>
+{/*input tài khoản */}
+<View>
+    <Text style={RegisterStyle.abvInput}>Email</Text>
+    {/*icon+input */}
+    <View style={RegisterStyle.iconInputContainer}>
+        <MaterialIcons
+            style={RegisterStyle.icon}
+            name="email"
+            size={27}
+            color="#2B2523" />
+        <TextInput
+            value={email}
+            onChangeText={(text) => setEmail(text)}
+            style={[RegisterStyle.Input, { fontSize: email ? 16 : 16 }]}
+            placeholder='user@gmail.com'
+            placeholderTextColor={'gray'}
+        />
+    </View>
+
+</View>
+{/*input pass */}
+<View>
+    <Text style={RegisterStyle.abvInput}>Mật khẩu</Text>
+    {/*icon+input */}
+    <View style={RegisterStyle.iconInputContainer}>
+        <AntDesign
+            style={RegisterStyle.icon}
+            name="lock"
+            size={27}
+            color="#2B2523" />
+        <TextInput
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            style={[RegisterStyle.Input, { fontSize: password ? 16 : 16 }]}
+            placeholder='Nhập mật khẩu của bạn'
+            secureTextEntry={true}
+            placeholderTextColor={'gray'}
+        />
+    </View>
+
+</View>
+
+{/*Avatar*/}
+<View>
+    <Text style={RegisterStyle.abvInput}>Avatar</Text>
+    <View style={RegisterStyle.iconInputContainer}>
+        <AntDesign
+            style={RegisterStyle.icon}
+            name="picture"
+            size={27}
+            color="#2B2523" />
+        <TouchableOpacity
+            style={[RegisterStyle.Input, { justifyContent: 'center' }]}
+            onPress={picker}
+        >
+
+            <Text style={[RegisterStyle.abvInput, { fontSize: 16 }]}>Nhấn để chọn ảnh đại diện</Text>
+
+            <View>
+                {avatar && <Image source={{ uri: avatar }} style={{ width: 100, height: 100 }} />}
+            </View>
+        </TouchableOpacity>
+    </View>
+</View>
+
+{/*Role - dropdown picker - bug*/}
+<View style={RegisterStyle.marginInput}>
+    <Text style={RegisterStyle.abvInput}>Vai trò</Text>
+    <View style={RegisterStyle.iconInputContainer}>
+        <Entypo
+            style={RegisterStyle.icon}
+            name="briefcase"
+            size={27}
+            color="#2B2523" />
+        {/* <TouchableOpacity
+        style={[RegisterStyle.Input, { justifyContent: 'center' }]}
+        onPress={() => {
+            console.log('pressed')
+        }}
+    > */}
+        <TextInput
+            value={roles}
+            onChangeText={(text) => setRoles(text)}
+            style={[RegisterStyle.Input, { fontSize: roles ? 16 : 16 }]}
+            placeholder='User/ Seller/ Nhân viên sàn...?'
+            secureTextEntry={true}
+            placeholderTextColor={'gray'}
+
+        />
+        {/* <SelectList 
+            boxStyles={{borderWidth:0,height:47,width:'95%', marginTop:15,}}
+            dropdownStyles={{borderWidth:0,height:47,width:'95%'}}
+            dropdownItemStyles={{borderWidth:0,height:47,width:'95%', zIndex:2}}
+            placeholder='Nhấn để chọn vai trò'
+            setSelected={setSelected}
+            data={roles}
+            maxHeight={300}
+        /> */}
+
+        {/* <Text style={[RegisterStyle.abvInput, { fontSize: 16 }]}>Nhấn để chọn vai trò</Text> */}
+        {/* </TouchableOpacity> */}
+    </View>
+</View>
+</View>
+
+{/*Button đăng ký*/}
+<View style={RegisterStyle.btnContainer}>
+{/*button*/}
+
+<View>
+    <TouchableOpacity style={RegisterStyle.btn}
+        //onPress={() => navigation.navigate('Login')}
+        onPress={handleRegister}
+    >
+        <Text style={RegisterStyle.btnText}>ĐĂNG KÝ</Text>
+    </TouchableOpacity>
+</View>
+</View>
